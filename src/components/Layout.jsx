@@ -24,10 +24,15 @@ const Layout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - 240px)` },
+          p: { xs: 1, sm: 2, md: 3 },
+          width: { xs: '100%', sm: `calc(100% - 280px)` },
           minHeight: '100vh',
           bgcolor: 'grey.50',
+          overflowX: 'auto',
+          maxWidth: { xs: '100%', sm: `calc(100% - 280px)` },
+          ml: { xs: 0, sm: '280px' },
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <Outlet />

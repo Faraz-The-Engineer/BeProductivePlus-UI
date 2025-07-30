@@ -72,10 +72,7 @@ const TaskManager = () => {
   const [stepDescription, setStepDescription] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
 
-  console.log('TaskManager render:', { user, loading, error, tasks: tasks.length });
-
   useEffect(() => {
-    console.log('TaskManager useEffect - fetching tasks');
     fetchTasks();
   }, []);
 
@@ -395,9 +392,16 @@ const TaskManager = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
+    <Container maxWidth={false} sx={{ px: { xs: 0.5, sm: 1, md: 2 }, maxWidth: '100%', width: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'stretch', sm: 'center' }, 
+        gap: { xs: 2, sm: 0 },
+        mb: 3 
+      }}>
         <Box>
           <Typography variant="h5" gutterBottom>
             Task Manager
@@ -409,8 +413,9 @@ const TaskManager = () => {
         <Button
           variant="contained"
           startIcon={<Plus size={16} />}
-          onClick={handleOpenDialog}
+          onClick={() => handleOpenDialog()}
           size="small"
+          sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
         >
           Add Task
         </Button>
@@ -424,8 +429,14 @@ const TaskManager = () => {
 
       {/* Date Changer */}
       <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: { xs: 1, sm: 2 },
+            flexWrap: 'wrap'
+          }}>
             <IconButton 
               onClick={() => navigateDate('prev')}
               sx={{ 
@@ -436,11 +447,19 @@ const TaskManager = () => {
               <ChevronLeft size={16} />
             </IconButton>
             
-            <Box sx={{ textAlign: 'center', minWidth: 200 }}>
+            <Box sx={{ 
+              textAlign: 'center', 
+              minWidth: { xs: 150, sm: 200 },
+              flex: 1,
+              px: { xs: 1, sm: 0 }
+            }}>
               <Typography variant="h6" fontWeight="bold" color={`${getDateColor(selectedDate)}.main`}>
                 {getDateLabel(selectedDate)}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ 
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                wordBreak: 'break-word'
+              }}>
                 {new Date(selectedDate).toLocaleDateString('en-US', { 
                   weekday: 'long',
                   year: 'numeric', 
@@ -505,68 +524,163 @@ const TaskManager = () => {
               </Button>
             </Box>
           ) : (
-            <Box sx={{ overflow: 'auto' }}>
-              <TableContainer component={Paper} elevation={0}>
-                <Table sx={{ minWidth: 650 }}>
+            <Box sx={{ overflow: 'auto', width: '100%', maxWidth: '100%' }}>
+              <TableContainer component={Paper} elevation={0} sx={{ maxWidth: '100%', overflowX: 'auto' }}>
+                <Table sx={{ 
+                  minWidth: { xs: 300, sm: 350, md: 400, lg: 500 },
+                  width: '100%',
+                  tableLayout: 'fixed',
+                  '& .MuiTableCell-root': {
+                    px: { xs: 0.5, sm: 1, md: 1.5 },
+                    py: { xs: 0.75, sm: 1 }
+                  }
+                }}>
                    <TableHead>
                      <TableRow>
-                       <TableCell sx={{ minWidth: 200 }}>Task Name</TableCell>
-                       <TableCell sx={{ minWidth: 100, textAlign: 'center' }}>Priority</TableCell>
-                       <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>Status</TableCell>
-                       <TableCell sx={{ minWidth: 100, textAlign: 'center' }}>Date</TableCell>
-                       <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>Time Estimate</TableCell>
-                       <TableCell sx={{ minWidth: 80, textAlign: 'center' }}>Steps</TableCell>
-                       <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>Progress</TableCell>
-                       <TableCell sx={{ minWidth: 80, textAlign: 'center' }}>Moves</TableCell>
-                       <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>Actions</TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 100, sm: 120, md: 150 },
+                         maxWidth: { xs: 120, sm: 150, md: 'none' },
+                         width: { xs: '50%', sm: '40%', md: '35%' }
+                       }}>
+                         Task Name
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 50, sm: 60, md: 80 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', sm: 'table-cell' },
+                         width: { sm: '12%', md: '10%' }
+                       }}>
+                         Priority
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 60, sm: 80, md: 100 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', md: 'table-cell' },
+                         width: { md: '10%', lg: '8%' }
+                       }}>
+                         Status
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 60, sm: 70, md: 80 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', sm: 'table-cell' },
+                         width: { sm: '12%', md: '10%' }
+                       }}>
+                         Date
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 60, sm: 80, md: 100 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', md: 'table-cell' },
+                         width: { md: '10%', lg: '8%' }
+                       }}>
+                         Time
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 50, sm: 60, md: 70 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', lg: 'table-cell' },
+                         width: { lg: '6%', xl: '5%' }
+                       }}>
+                         Steps
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 60, sm: 70, md: 90 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', lg: 'table-cell' },
+                         width: { lg: '8%', xl: '6%' }
+                       }}>
+                         Progress
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 50, sm: 60, md: 70 }, 
+                         textAlign: 'center',
+                         display: { xs: 'none', xl: 'table-cell' },
+                         width: { xl: '5%' }
+                       }}>
+                         Moves
+                       </TableCell>
+                       <TableCell sx={{ 
+                         minWidth: { xs: 80, sm: 100, md: 120 }, 
+                         textAlign: 'center',
+                         width: { xs: '50%', sm: '30%', md: '15%' }
+                       }}>
+                         Actions
+                       </TableCell>
                      </TableRow>
                    </TableHead>
                   <TableBody>
                                          {filteredTasks.map((task) => (
                        <React.Fragment key={task._id}>
                          <TableRow hover>
-                           <TableCell>
-                             <Box sx={{ minWidth: 0 }}>
+                                                    <TableCell>
+                           <Box sx={{ minWidth: 0 }}>
+                             <Typography 
+                               variant="body1" 
+                               fontWeight="medium"
+                               sx={{
+                                 wordBreak: 'break-word',
+                                 lineHeight: 1.4,
+                                 mb: 0.5,
+                                 fontSize: { xs: '0.875rem', sm: '1rem' }
+                               }}
+                             >
+                               {task.name}
+                             </Typography>
+                             {task.dependency && (
                                <Typography 
-                                 variant="body1" 
-                                 fontWeight="medium"
+                                 variant="body2" 
+                                 color="text.secondary"
                                  sx={{
                                    wordBreak: 'break-word',
                                    lineHeight: 1.4,
-                                   mb: 0.5,
+                                   fontSize: { xs: '0.75rem', sm: '0.875rem' }
                                  }}
                                >
-                                 {task.name}
+                                 Depends on: {task.dependency}
                                </Typography>
-                               {task.dependency && (
-                                 <Typography 
-                                   variant="body2" 
-                                   color="text.secondary"
-                                   sx={{
-                                     wordBreak: 'break-word',
-                                     lineHeight: 1.4,
-                                   }}
-                                 >
-                                   Depends on: {task.dependency}
-                                 </Typography>
-                               )}
+                             )}
+                             {/* Show priority and status on mobile */}
+                             <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                               <Chip
+                                 label={task.priority}
+                                 color={getPriorityColor(task.priority)}
+                                 size="small"
+                                 sx={{ fontSize: '0.7rem', height: 20 }}
+                               />
+                               <Chip
+                                 label={task.status}
+                                 color={getStatusColor(task.status)}
+                                 size="small"
+                                 sx={{ fontSize: '0.7rem', height: 20 }}
+                               />
                              </Box>
-                           </TableCell>
-                                                    <TableCell sx={{ textAlign: 'center' }}>
+                           </Box>
+                         </TableCell>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', sm: 'table-cell' }
+                         }}>
                            <Chip
                              label={task.priority}
                              color={getPriorityColor(task.priority)}
                              size="small"
                            />
                          </TableCell>
-                         <TableCell sx={{ textAlign: 'center' }}>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', md: 'table-cell' }
+                         }}>
                            <Chip
                              label={task.status}
                              color={getStatusColor(task.status)}
                              size="small"
                            />
                          </TableCell>
-                         <TableCell sx={{ textAlign: 'center' }}>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', sm: 'table-cell' }
+                         }}>
                            <Chip
                              icon={<Calendar size={16} />}
                              label={formatDate(task.date)}
@@ -575,12 +689,18 @@ const TaskManager = () => {
                              variant="outlined"
                            />
                          </TableCell>
-                         <TableCell sx={{ textAlign: 'center' }}>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', md: 'table-cell' }
+                         }}>
                            <Typography variant="body2">
                              {task.timeEstimate} min
                            </Typography>
                          </TableCell>
-                                                    <TableCell sx={{ textAlign: 'center' }}>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', lg: 'table-cell' }
+                         }}>
                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                              <Typography variant="body2">
                                {task.steps?.length || 0} steps
@@ -600,7 +720,10 @@ const TaskManager = () => {
                              )}
                            </Box>
                          </TableCell>
-                         <TableCell sx={{ textAlign: 'center' }}>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', lg: 'table-cell' }
+                         }}>
                            <Box sx={{ minWidth: 100, display: 'flex', justifyContent: 'center' }}>
                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, maxWidth: 120 }}>
                                <LinearProgress 
@@ -622,7 +745,10 @@ const TaskManager = () => {
                              </Box>
                            </Box>
                          </TableCell>
-                         <TableCell sx={{ textAlign: 'center' }}>
+                         <TableCell sx={{ 
+                           textAlign: 'center',
+                           display: { xs: 'none', xl: 'table-cell' }
+                         }}>
                            <Chip
                              label={`${task.moveCount || 0} moves`}
                              size="small"
@@ -634,12 +760,21 @@ const TaskManager = () => {
                              }}
                            />
                          </TableCell>
-                                                    <TableCell sx={{ textAlign: 'center' }}>
-                           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                         <TableCell sx={{ textAlign: 'center' }}>
+                           <Box sx={{ 
+                             display: 'flex', 
+                             gap: { xs: 0.5, sm: 0.75, md: 1 }, 
+                             justifyContent: 'center',
+                             flexWrap: 'wrap'
+                           }}>
                                <IconButton
                                  size="small"
                                  onClick={() => handleOpenDialog(task)}
                                  color="primary"
+                                 sx={{ 
+                                   p: { xs: 0.5, sm: 0.75, md: 1 },
+                                   '& .MuiSvgIcon-root': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }
+                                 }}
                                >
                                  <Edit size={16} />
                                </IconButton>
@@ -647,6 +782,10 @@ const TaskManager = () => {
                                  size="small"
                                  onClick={() => handleStatusChange(task._id, 'Completed')}
                                  color="success"
+                                 sx={{ 
+                                   p: { xs: 0.5, sm: 0.75, md: 1 },
+                                   '& .MuiSvgIcon-root': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }
+                                 }}
                                >
                                  <CheckCircle size={16} />
                                </IconButton>
@@ -657,6 +796,8 @@ const TaskManager = () => {
                                    color="info"
                                    title="Move to next day"
                                    sx={{
+                                     p: { xs: 0.5, sm: 0.75, md: 1 },
+                                     '& .MuiSvgIcon-root': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } },
                                      '&:hover': {
                                        backgroundColor: 'info.light',
                                        color: 'white'
@@ -670,6 +811,10 @@ const TaskManager = () => {
                                  size="small"
                                  onClick={() => handleDeleteTask(task._id)}
                                  color="error"
+                                 sx={{ 
+                                   p: { xs: 0.5, sm: 0.75, md: 1 },
+                                   '& .MuiSvgIcon-root': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }
+                                 }}
                                >
                                  <Trash2 size={16} />
                                </IconButton>
@@ -681,38 +826,55 @@ const TaskManager = () => {
                          {expandedTasks.has(task._id) && task.steps && task.steps.length > 0 && (
                            <TableRow>
                              <TableCell colSpan={9} sx={{ p: 0, border: 0 }}>
-                                                            <Box sx={{ bgcolor: 'grey.50', p: 2, borderTop: 1, borderColor: 'divider' }}>
-                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                 <Typography variant="subtitle2" fontWeight="bold" color="primary.main">
-                                   Task Steps
-                                 </Typography>
-                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                     <LinearProgress 
-                                       variant="determinate" 
-                                       value={task.progressPercentage || 0} 
-                                       sx={{ 
-                                         width: 80, 
-                                         height: 8, 
-                                         borderRadius: 4,
-                                         backgroundColor: 'grey.300',
-                                         '& .MuiLinearProgress-bar': {
+                               <Box sx={{ 
+                                 bgcolor: 'grey.50', 
+                                 p: { xs: 1.5, sm: 2 }, 
+                                 borderTop: 1, 
+                                 borderColor: 'divider' 
+                               }}>
+                                 <Box sx={{ 
+                                   display: 'flex', 
+                                   flexDirection: { xs: 'column', sm: 'row' },
+                                   justifyContent: 'space-between', 
+                                   alignItems: { xs: 'stretch', sm: 'center' }, 
+                                   gap: { xs: 1, sm: 2 },
+                                   mb: 2 
+                                 }}>
+                                   <Typography variant="subtitle2" fontWeight="bold" color="primary.main">
+                                     Task Steps
+                                   </Typography>
+                                   <Box sx={{ 
+                                     display: 'flex', 
+                                     alignItems: 'center', 
+                                     gap: { xs: 1, sm: 2 },
+                                     flexWrap: 'wrap'
+                                   }}>
+                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                       <LinearProgress 
+                                         variant="determinate" 
+                                         value={task.progressPercentage || 0} 
+                                         sx={{ 
+                                           width: { xs: 60, sm: 80 }, 
+                                           height: 8, 
                                            borderRadius: 4,
-                                         }
-                                       }}
+                                           backgroundColor: 'grey.300',
+                                           '& .MuiLinearProgress-bar': {
+                                             borderRadius: 4,
+                                           }
+                                         }}
+                                       />
+                                       <Typography variant="caption" color="text.secondary">
+                                         {task.progressPercentage || 0}%
+                                       </Typography>
+                                     </Box>
+                                     <Chip
+                                       label={`${task.moveCount || 0} moves`}
+                                       size="small"
+                                       variant="outlined"
+                                       color={task.moveCount > 0 ? 'warning' : 'default'}
                                      />
-                                     <Typography variant="caption" color="text.secondary">
-                                       {task.progressPercentage || 0}%
-                                     </Typography>
                                    </Box>
-                                   <Chip
-                                     label={`${task.moveCount || 0} moves`}
-                                     size="small"
-                                     variant="outlined"
-                                     color={task.moveCount > 0 ? 'warning' : 'default'}
-                                   />
                                  </Box>
-                               </Box>
                                  <List sx={{ p: 0 }}>
                                    {task.steps.map((step, stepIndex) => (
                                      <ListItem 

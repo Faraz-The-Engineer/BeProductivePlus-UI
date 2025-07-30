@@ -60,21 +60,28 @@ const Dashboard = () => {
   const stats = getStats();
 
   const StatCard = ({ title, value, icon, color, subtitle }) => (
-    <Card sx={{ height: '100%', minHeight: 140 }}>
-      <CardContent sx={{ p: 3 }}>
+    <Card sx={{ height: '100%', minHeight: { xs: 120, sm: 140 } }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography color="text.secondary" gutterBottom variant="body2" sx={{ mb: 1 }}>
+            <Typography color="text.secondary" gutterBottom variant="body2" sx={{ 
+              mb: 1,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+            }}>
               {title}
             </Typography>
-            <Typography variant="h3" component="div" fontWeight="bold" sx={{ mb: 1 }}>
+            <Typography variant="h3" component="div" fontWeight="bold" sx={{ 
+              mb: 1,
+              fontSize: { xs: '2rem', sm: '3rem' }
+            }}>
               {value}
             </Typography>
             {subtitle && (
               <Typography variant="body2" color="text.secondary" sx={{ 
                 mt: 1,
                 wordBreak: 'break-word',
-                lineHeight: 1.4
+                lineHeight: 1.4,
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
               }}>
                 {subtitle}
               </Typography>
@@ -82,11 +89,11 @@ const Dashboard = () => {
           </Box>
           <Box
             sx={{
-              p: 2,
+              p: { xs: 1.5, sm: 2 },
               borderRadius: 2,
               backgroundColor: `${color}.light`,
               color: `${color}.main`,
-              ml: 2,
+              ml: { xs: 1, sm: 2 },
               flexShrink: 0,
             }}
           >
@@ -165,22 +172,28 @@ const Dashboard = () => {
 
   const TaskList = ({ tasks, title, icon, emptyMessage, color = 'primary' }) => (
     <Card sx={{ height: '100%' }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: { xs: 2, sm: 3 } }}>
           {icon}
-          <Typography variant="h6" color={`${color}.main`}>
+          <Typography variant="h6" color={`${color}.main`} sx={{
+            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+          }}>
             {title}
           </Typography>
         </Box>
         {tasks.length === 0 ? (
-          <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+          <Typography color="text.secondary" sx={{ 
+            textAlign: 'center', 
+            py: { xs: 3, sm: 4 },
+            fontSize: { xs: '0.875rem', sm: '1rem' }
+          }}>
             {emptyMessage}
           </Typography>
         ) : (
           <List sx={{ p: 0 }}>
             {tasks.map((task, index) => (
               <Box key={task._id}>
-                <ListItem sx={{ px: 0, py: 1 }}>
+                <ListItem sx={{ px: 0, py: { xs: 0.5, sm: 1 } }}>
                   <ListItemText
                     primary={
                       <Typography
@@ -190,6 +203,7 @@ const Dashboard = () => {
                           wordBreak: 'break-word',
                           lineHeight: 1.4,
                           mb: 0.5,
+                          fontSize: { xs: '0.875rem', sm: '1rem' }
                         }}
                       >
                         {task.name}
@@ -197,7 +211,9 @@ const Dashboard = () => {
                     }
                     secondary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                        }}>
                           {task.timeEstimate} min • {task.priority}
                         </Typography>
                         <Chip
@@ -206,6 +222,7 @@ const Dashboard = () => {
                           color={getDateColor(task.date)}
                           size="small"
                           variant="outlined"
+                          sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                         />
                       </Box>
                     }
@@ -217,7 +234,10 @@ const Dashboard = () => {
                       task.status === 'In Progress' ? 'warning' : 'info'
                     }
                     size="small"
-                    sx={{ flexShrink: 0 }}
+                    sx={{ 
+                      flexShrink: 0,
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                    }}
                   />
                 </ListItem>
                 {index < tasks.length - 1 && <Divider />}
@@ -237,12 +257,19 @@ const Dashboard = () => {
     
     return (
       <Card sx={{ height: '100%' }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography variant="h6" gutterBottom sx={{ 
+            mb: { xs: 2, sm: 3 },
+            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+          }}>
             Recent Tasks
           </Typography>
           {recentTasks.length === 0 ? (
-            <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="text.secondary" sx={{ 
+              textAlign: 'center', 
+              py: { xs: 3, sm: 4 },
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}>
               No tasks yet. Create your first task to get started!
             </Typography>
           ) : (
@@ -254,7 +281,7 @@ const Dashboard = () => {
                     display: 'flex',
                     alignItems: 'flex-start',
                     justifyContent: 'space-between',
-                    py: 2,
+                    py: { xs: 1.5, sm: 2 },
                     borderBottom: index < recentTasks.length - 1 ? 1 : 0,
                     borderColor: 'divider',
                     '&:last-child': {
@@ -262,7 +289,7 @@ const Dashboard = () => {
                     },
                   }}
                 >
-                  <Box sx={{ flex: 1, minWidth: 0, mr: 2 }}>
+                  <Box sx={{ flex: 1, minWidth: 0, mr: { xs: 1, sm: 2 } }}>
                     <Typography 
                       variant="body1" 
                       fontWeight="medium" 
@@ -274,6 +301,7 @@ const Dashboard = () => {
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
+                        fontSize: { xs: '0.875rem', sm: '1rem' }
                       }}
                     >
                       {task.name}
@@ -285,6 +313,7 @@ const Dashboard = () => {
                         sx={{
                           wordBreak: 'break-word',
                           lineHeight: 1.4,
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' }
                         }}
                       >
                         {task.timeEstimate} min • {task.priority} priority
@@ -295,7 +324,10 @@ const Dashboard = () => {
                         color={getDateColor(task.date)}
                         size="small"
                         variant="outlined"
-                        sx={{ ml: 1 }}
+                        sx={{ 
+                          ml: 1,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                        }}
                       />
                     </Box>
                   </Box>
@@ -306,7 +338,10 @@ const Dashboard = () => {
                       task.status === 'In Progress' ? 'warning' : 'info'
                     }
                     size="small"
-                    sx={{ flexShrink: 0 }}
+                    sx={{ 
+                      flexShrink: 0,
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                    }}
                   />
                 </Box>
               ))}
@@ -329,13 +364,18 @@ const Dashboard = () => {
   const overdueTasks = getOverdueTasks();
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
+    <Container maxWidth={false} sx={{ px: { xs: 0.5, sm: 1, md: 2 }, maxWidth: '100%', width: '100%', overflow: 'hidden' }}>
       {/* Welcome Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+        <Typography variant="h4" gutterBottom sx={{ 
+          fontSize: { xs: '1.75rem', sm: '2.125rem' },
+          wordBreak: 'break-word'
+        }}>
           Welcome back, {user?.name}!
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{
+          fontSize: { xs: '0.875rem', sm: '1rem' }
+        }}>
           Here's an overview of your task management progress
         </Typography>
       </Box>
@@ -347,7 +387,7 @@ const Dashboard = () => {
       )}
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, sm: 4 } }}>
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
             title="Total Tasks"
@@ -387,10 +427,10 @@ const Dashboard = () => {
       </Grid>
 
       {/* Progress Overview */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, sm: 4 } }}>
         <Grid item xs={12} lg={6}>
           <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
                 Completion Progress
               </Typography>
@@ -416,7 +456,7 @@ const Dashboard = () => {
       </Grid>
 
       {/* Task Lists */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, sm: 4 } }}>
         <Grid item xs={12} md={6}>
           <TaskList
             tasks={overdueTasks}

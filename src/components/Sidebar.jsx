@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const drawerWidth = 280;
+const drawerWidth = { xs: 280, sm: 280, md: 280 };
 
 const menuItems = [
   {
@@ -193,7 +193,7 @@ const Sidebar = () => {
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth,
+            width: { xs: 280, sm: 280 },
           },
         }}
       >
@@ -207,7 +207,9 @@ const Sidebar = () => {
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth,
+            width: { sm: 280, md: 280 },
+            zIndex: 1200,
+            position: 'fixed',
           },
         }}
         open
