@@ -31,6 +31,8 @@ import {
   Checkbox,
   Container,
   LinearProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Plus,
@@ -60,25 +62,32 @@ const TaskManager = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10)); // Default to today
   const [moveTaskDialog, setMoveTaskDialog] = useState({ open: false, taskId: null, taskName: '' });
+  const [onHoldDialog, setOnHoldDialog] = useState({ open: false, taskId: null, taskName: '', reason: '' });
   const [expandedTasks, setExpandedTasks] = useState(new Set());
   const [formData, setFormData] = useState({
     name: '',
     timeEstimate: '',
     dependency: '',
     priority: 'Medium',
+    status: 'Pending',
+    onHoldReason: '',
     date: new Date().toISOString().slice(0, 10), // Default to today
     steps: [],
   });
   const [stepDescription, setStepDescription] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
+  const [activeTab, setActiveTab] = useState(0); // 0: All, 1: Pending, 2: In Progress, 3: Completed, 4: On Hold
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
   useEffect(() => {
+    let filtered = tasks;
+    
+    // First apply date filtering
     if (activeFilter) {
-      const filtered = tasks.filter(task => {
+      filtered = filtered.filter(task => {
         const taskDate = new Date(task.date);
         const startDate = new Date(activeFilter.startDate);
         const endDate = new Date(activeFilter.endDate);
@@ -86,10 +95,9 @@ const TaskManager = () => {
         
         return taskDate >= startDate && taskDate <= endDate;
       });
-      setFilteredTasks(filtered);
     } else {
       // Filter tasks for the selected date
-      const filtered = tasks.filter(task => {
+      filtered = filtered.filter(task => {
         const taskDate = new Date(task.date);
         const selectedDateObj = new Date(selectedDate);
         selectedDateObj.setHours(0, 0, 0, 0);
@@ -98,15 +106,55 @@ const TaskManager = () => {
         
         return taskDate >= selectedDateObj && taskDate < nextDay;
       });
-      setFilteredTasks(filtered);
     }
-  }, [tasks, activeFilter, selectedDate]);
+    
+    // Then apply status filtering based on active tab
+    switch (activeTab) {
+      case 1: // Pending
+        filtered = filtered.filter(task => task.status === 'Pending');
+        break;
+      case 2: // In Progress
+        filtered = filtered.filter(task => task.status === 'In Progress');
+        break;
+      case 3: // Completed
+        filtered = filtered.filter(task => task.status === 'Completed');
+        break;
+      case 4: // On Hold
+        filtered = filtered.filter(task => task.status === 'On Hold');
+        break;
+      default: // All (case 0)
+        break;
+    }
+    
+    setFilteredTasks(filtered);
+  }, [tasks, activeFilter, selectedDate, activeTab]);
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
       const data = await tasksAPI.getAll();
-      setTasks(data);
+      
+      // Sort tasks by status priority: In Progress/Pending first, then On Hold, then Completed last
+      const sortedData = data.sort((a, b) => {
+        const statusPriority = {
+          'In Progress': 1,
+          'Pending': 1,
+          'On Hold': 2,
+          'Completed': 3
+        };
+        
+        const priorityA = statusPriority[a.status] || 4;
+        const priorityB = statusPriority[b.status] || 4;
+        
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        
+        // If same status, sort by creation date (newest first)
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      
+      setTasks(sortedData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -120,6 +168,10 @@ const TaskManager = () => {
 
   const handleClearFilter = () => {
     setActiveFilter(null);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
   // Date navigation functions
@@ -188,6 +240,8 @@ const TaskManager = () => {
         timeEstimate: task.timeEstimate,
         dependency: task.dependency || '',
         priority: task.priority,
+        status: task.status || 'Pending',
+        onHoldReason: task.onHoldReason || '',
         date: task.date || new Date().toISOString().slice(0, 10),
         steps: task.steps || [],
       });
@@ -198,6 +252,8 @@ const TaskManager = () => {
         timeEstimate: '',
         dependency: '',
         priority: 'Medium',
+        status: 'Pending',
+        onHoldReason: '',
         date: selectedDate, // Use the selected date instead of today
         steps: [],
       });
@@ -213,6 +269,8 @@ const TaskManager = () => {
       timeEstimate: '',
       dependency: '',
       priority: 'Medium',
+      status: 'Pending',
+      onHoldReason: '',
       date: selectedDate, // Reset to selected date
       steps: [],
     });
@@ -277,6 +335,35 @@ const TaskManager = () => {
     }
   };
 
+  const handleOnHold = async (taskId, taskName, reason) => {
+    try {
+      await tasksAPI.update(taskId, { status: 'On Hold', onHoldReason: reason });
+      fetchTasks();
+      setOnHoldDialog({ open: false, taskId: null, taskName: '', reason: '' });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const openOnHoldDialog = (taskId, taskName) => {
+    setOnHoldDialog({ open: true, taskId, taskName, reason: '' });
+  };
+
+  const getNextStatus = (currentStatus) => {
+    switch (currentStatus) {
+      case 'Pending':
+        return 'In Progress';
+      case 'In Progress':
+        return 'Completed';
+      case 'Completed':
+        return 'Pending';
+      case 'On Hold':
+        return 'Pending';
+      default:
+        return 'Pending';
+    }
+  };
+
   const handleMoveToNextDay = async (taskId, taskName) => {
     try {
       const nextDay = new Date(selectedDate);
@@ -323,6 +410,8 @@ const TaskManager = () => {
         return 'warning';
       case 'Pending':
         return 'info';
+      case 'On Hold':
+        return 'error';
       default:
         return 'default';
     }
@@ -504,16 +593,161 @@ const TaskManager = () => {
       {/* Date Filter */}
       {/* <DateFilter onFilterChange={handleFilterChange} onClearFilter={handleClearFilter} /> */}
 
+      {/* Status Tabs */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                minWidth: { xs: 80, sm: 100 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                fontWeight: 500,
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: 1.5,
+              }
+            }}
+          >
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2">All</Typography>
+                  <Chip 
+                    label={filteredTasks.length} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'primary.main',
+                      color: 'white'
+                    }} 
+                  />
+                </Box>
+              }
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2">Pending</Typography>
+                  <Chip 
+                    label={tasks.filter(task => {
+                      const taskDate = new Date(task.date);
+                      const selectedDateObj = new Date(selectedDate);
+                      selectedDateObj.setHours(0, 0, 0, 0);
+                      const nextDay = new Date(selectedDateObj);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      return taskDate >= selectedDateObj && taskDate < nextDay && task.status === 'Pending';
+                    }).length} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'info.main',
+                      color: 'white'
+                    }} 
+                  />
+                </Box>
+              }
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2">In Progress</Typography>
+                  <Chip 
+                    label={tasks.filter(task => {
+                      const taskDate = new Date(task.date);
+                      const selectedDateObj = new Date(selectedDate);
+                      selectedDateObj.setHours(0, 0, 0, 0);
+                      const nextDay = new Date(selectedDateObj);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      return taskDate >= selectedDateObj && taskDate < nextDay && task.status === 'In Progress';
+                    }).length} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'warning.main',
+                      color: 'white'
+                    }} 
+                  />
+                </Box>
+              }
+            />
+                         <Tab 
+               label={
+                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                   <Typography variant="body2">Completed</Typography>
+                   <Chip 
+                     label={tasks.filter(task => {
+                       const taskDate = new Date(task.date);
+                       const selectedDateObj = new Date(selectedDate);
+                       selectedDateObj.setHours(0, 0, 0, 0);
+                       const nextDay = new Date(selectedDateObj);
+                       nextDay.setDate(nextDay.getDate() + 1);
+                       return taskDate >= selectedDateObj && taskDate < nextDay && task.status === 'Completed';
+                     }).length} 
+                     size="small" 
+                     sx={{ 
+                       height: 20, 
+                       fontSize: '0.7rem',
+                       backgroundColor: 'success.main',
+                       color: 'white'
+                     }} 
+                   />
+                 </Box>
+               }
+             />
+             <Tab 
+               label={
+                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                   <Typography variant="body2">On Hold</Typography>
+                   <Chip 
+                     label={tasks.filter(task => {
+                       const taskDate = new Date(task.date);
+                       const selectedDateObj = new Date(selectedDate);
+                       selectedDateObj.setHours(0, 0, 0, 0);
+                       const nextDay = new Date(selectedDateObj);
+                       nextDay.setDate(nextDay.getDate() + 1);
+                       return taskDate >= selectedDateObj && taskDate < nextDay && task.status === 'On Hold';
+                     }).length} 
+                     size="small" 
+                     sx={{ 
+                       height: 20, 
+                       fontSize: '0.7rem',
+                       backgroundColor: 'error.main',
+                       color: 'white'
+                     }} 
+                   />
+                 </Box>
+               }
+             />
+          </Tabs>
+        </CardContent>
+      </Card>
+
       {/* Tasks Table */}
       <Card>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           {filteredTasks.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                {activeFilter ? 'No tasks found for the selected date range' : `No tasks for ${getDateLabel(selectedDate)}`}
+                                 {(() => {
+                   if (activeFilter) return 'No tasks found for the selected date range';
+                   const tabLabels = ['All', 'Pending', 'In Progress', 'Completed', 'On Hold'];
+                   return `No ${tabLabels[activeTab].toLowerCase()} tasks for ${getDateLabel(selectedDate)}`;
+                 })()}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {activeFilter ? 'Try adjusting your filter or create a new task' : `No tasks scheduled for ${getDateLabel(selectedDate).toLowerCase()}. Create a new task or navigate to a different date.`}
+                                 {(() => {
+                   if (activeFilter) return 'Try adjusting your filter or create a new task';
+                   const tabLabels = ['All', 'Pending', 'In Progress', 'Completed', 'On Hold'];
+                   return `No ${tabLabels[activeTab].toLowerCase()} tasks for ${getDateLabel(selectedDate).toLowerCase()}. Create a new task or navigate to a different date.`;
+                 })()}
               </Typography>
               <Button
                 variant="contained"
@@ -560,6 +794,16 @@ const TaskManager = () => {
                        }}>
                          Status
                        </TableCell>
+                       {activeTab === 4 && (
+                         <TableCell sx={{ 
+                           minWidth: { xs: 120, sm: 150, md: 180 }, 
+                           textAlign: 'left',
+                           display: { xs: 'none', md: 'table-cell' },
+                           width: { md: '15%', lg: '12%' }
+                         }}>
+                           On Hold Reason
+                         </TableCell>
+                       )}
                        <TableCell sx={{ 
                          minWidth: { xs: 60, sm: 70, md: 80 }, 
                          textAlign: 'center',
@@ -640,6 +884,20 @@ const TaskManager = () => {
                                  Depends on: {task.dependency}
                                </Typography>
                              )}
+                             {task.status === 'On Hold' && task.onHoldReason && activeTab !== 4 && (
+                               <Typography 
+                                 variant="body2" 
+                                 color="error.main"
+                                 sx={{
+                                   wordBreak: 'break-word',
+                                   lineHeight: 1.4,
+                                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                   fontStyle: 'italic'
+                                 }}
+                               >
+                                 On Hold: {task.onHoldReason}
+                               </Typography>
+                             )}
                              {/* Show priority and status on mobile */}
                              <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1, mt: 1, flexWrap: 'wrap' }}>
                                <Chip
@@ -655,6 +913,23 @@ const TaskManager = () => {
                                  sx={{ fontSize: '0.7rem', height: 20 }}
                                />
                              </Box>
+                             {/* Show on hold reason on mobile when in on hold tab */}
+                             {activeTab === 4 && task.onHoldReason && (
+                               <Box sx={{ display: { xs: 'block', sm: 'none' }, mt: 1 }}>
+                                 <Typography 
+                                   variant="body2" 
+                                   color="error.main"
+                                   sx={{
+                                     wordBreak: 'break-word',
+                                     lineHeight: 1.4,
+                                     fontSize: '0.75rem',
+                                     fontStyle: 'italic'
+                                   }}
+                                 >
+                                   <strong>On Hold:</strong> {task.onHoldReason}
+                                 </Typography>
+                               </Box>
+                             )}
                            </Box>
                          </TableCell>
                          <TableCell sx={{ 
@@ -677,6 +952,37 @@ const TaskManager = () => {
                              size="small"
                            />
                          </TableCell>
+                         {activeTab === 4 && (
+                           <TableCell sx={{ 
+                             textAlign: 'left',
+                             display: { xs: 'none', md: 'table-cell' }
+                           }}>
+                             {task.onHoldReason ? (
+                               <Typography 
+                                 variant="body2" 
+                                 color="error.main"
+                                 sx={{
+                                   wordBreak: 'break-word',
+                                   lineHeight: 1.4,
+                                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                   fontStyle: 'italic'
+                                 }}
+                               >
+                                 {task.onHoldReason}
+                               </Typography>
+                             ) : (
+                               <Typography 
+                                 variant="body2" 
+                                 color="text.secondary"
+                                 sx={{
+                                   fontStyle: 'italic'
+                                 }}
+                               >
+                                 No reason provided
+                               </Typography>
+                             )}
+                           </TableCell>
+                         )}
                          <TableCell sx={{ 
                            textAlign: 'center',
                            display: { xs: 'none', sm: 'table-cell' }
@@ -780,15 +1086,38 @@ const TaskManager = () => {
                                </IconButton>
                                <IconButton
                                  size="small"
-                                 onClick={() => handleStatusChange(task._id, 'Completed')}
-                                 color="success"
+                                 onClick={() => handleStatusChange(task._id, getNextStatus(task.status))}
+                                 color={task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'warning' : task.status === 'On Hold' ? 'error' : 'default'}
                                  sx={{ 
                                    p: { xs: 0.5, sm: 0.75, md: 1 },
                                    '& .MuiSvgIcon-root': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }
                                  }}
+                                 title={`Mark as ${getNextStatus(task.status)}`}
                                >
-                                 <CheckCircle size={16} />
+                                 {task.status === 'Completed' ? (
+                                   <CheckCircle size={16} />
+                                 ) : task.status === 'In Progress' ? (
+                                   <Circle size={16} />
+                                 ) : task.status === 'On Hold' ? (
+                                   <Circle size={16} />
+                                 ) : (
+                                   <Circle size={16} />
+                                 )}
                                </IconButton>
+                               {task.status !== 'Completed' && task.status !== 'On Hold' && (
+                                 <IconButton
+                                   size="small"
+                                   onClick={() => openOnHoldDialog(task._id, task.name)}
+                                   color="error"
+                                   title="Put on hold"
+                                   sx={{ 
+                                     p: { xs: 0.5, sm: 0.75, md: 1 },
+                                     '& .MuiSvgIcon-root': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }
+                                   }}
+                                 >
+                                   <Circle size={16} />
+                                 </IconButton>
+                               )}
                                {task.status !== 'Completed' && (
                                  <IconButton
                                    size="small"
@@ -825,7 +1154,7 @@ const TaskManager = () => {
                          {/* Expanded Steps Row */}
                          {expandedTasks.has(task._id) && task.steps && task.steps.length > 0 && (
                            <TableRow>
-                             <TableCell colSpan={9} sx={{ p: 0, border: 0 }}>
+                             <TableCell colSpan={activeTab === 4 ? 10 : 9} sx={{ p: 0, border: 0 }}>
                                <Box sx={{ 
                                  bgcolor: 'grey.50', 
                                  p: { xs: 1.5, sm: 2 }, 
@@ -985,31 +1314,61 @@ const TaskManager = () => {
                   <MenuItem value="High">High</MenuItem>
                 </Select>
               </FormControl>
+
+              <FormControl sx={{ flex: 1, minWidth: 200 }}>
+                <InputLabel>Status</InputLabel>
+                                 <Select
+                   name="status"
+                   value={formData.status}
+                   onChange={handleInputChange}
+                   label="Status"
+                 >
+                   <MenuItem value="Pending">Pending</MenuItem>
+                   <MenuItem value="In Progress">In Progress</MenuItem>
+                   <MenuItem value="Completed">Completed</MenuItem>
+                   <MenuItem value="On Hold">On Hold</MenuItem>
+                 </Select>
+              </FormControl>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
-              <TextField
-                label="Task Date"
-                name="date"
-                type="date"
-                value={formData.date}
-                onChange={handleInputChange}
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={{ flex: 1, minWidth: 200 }}
-              />
-              
-              <TextField
-                fullWidth
-                label="Dependency (optional)"
-                name="dependency"
-                value={formData.dependency}
-                onChange={handleInputChange}
-                sx={{ flex: 1, minWidth: 200 }}
-              />
-            </Box>
+                         <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+               <TextField
+                 label="Task Date"
+                 name="date"
+                 type="date"
+                 value={formData.date}
+                 onChange={handleInputChange}
+                 required
+                 InputLabelProps={{
+                   shrink: true,
+                 }}
+                 sx={{ flex: 1, minWidth: 200 }}
+               />
+               
+               <TextField
+                 fullWidth
+                 label="Dependency (optional)"
+                 name="dependency"
+                 value={formData.dependency}
+                 onChange={handleInputChange}
+                 sx={{ flex: 1, minWidth: 200 }}
+               />
+             </Box>
+
+             {formData.status === 'On Hold' && (
+               <TextField
+                 fullWidth
+                 label="On Hold Reason"
+                 name="onHoldReason"
+                 value={formData.onHoldReason}
+                 onChange={handleInputChange}
+                 margin="normal"
+                 multiline
+                 rows={3}
+                 placeholder="Explain why this task is on hold..."
+                 helperText="Provide a reason for putting this task on hold"
+               />
+             )}
             
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" gutterBottom>
@@ -1109,10 +1468,52 @@ const TaskManager = () => {
           >
             Move to Next Day
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
-  );
-};
+                 </DialogActions>
+       </Dialog>
+
+       {/* On Hold Dialog */}
+       <Dialog 
+         open={onHoldDialog.open} 
+         onClose={() => setOnHoldDialog({ open: false, taskId: null, taskName: '', reason: '' })}
+         maxWidth="sm"
+         fullWidth
+       >
+         <DialogTitle>
+           Put Task On Hold
+         </DialogTitle>
+         <DialogContent>
+           <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
+             Please provide a reason for putting "{onHoldDialog.taskName}" on hold:
+           </Typography>
+           <TextField
+             fullWidth
+             label="On Hold Reason"
+             value={onHoldDialog.reason}
+             onChange={(e) => setOnHoldDialog({ ...onHoldDialog, reason: e.target.value })}
+             multiline
+             rows={3}
+             placeholder="Explain why this task is being put on hold..."
+             helperText="This reason will be displayed with the task"
+           />
+         </DialogContent>
+         <DialogActions>
+           <Button 
+             onClick={() => setOnHoldDialog({ open: false, taskId: null, taskName: '', reason: '' })}
+           >
+             Cancel
+           </Button>
+           <Button
+             variant="contained"
+             onClick={() => handleOnHold(onHoldDialog.taskId, onHoldDialog.taskName, onHoldDialog.reason)}
+             color="error"
+             disabled={!onHoldDialog.reason.trim()}
+           >
+             Put On Hold
+           </Button>
+         </DialogActions>
+       </Dialog>
+     </Container>
+   );
+ };
 
 export default TaskManager; 
