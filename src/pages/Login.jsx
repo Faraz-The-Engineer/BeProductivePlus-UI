@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -122,14 +122,7 @@ const Login = () => {
             </Button>
           </Box>
 
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
-              <Link to="/signup" style={{ color: '#1976d2', textDecoration: 'none' }}>
-                Sign up
-              </Link>
-            </Typography>
-          </Box>
+
         </CardContent>
       </Card>
     </Box>

@@ -47,6 +47,8 @@ import {
   ChevronUp,
   Circle,
   ArrowRight,
+  FileText,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { tasksAPI } from '../services/api';
@@ -64,6 +66,14 @@ const TaskManager = () => {
   const [moveTaskDialog, setMoveTaskDialog] = useState({ open: false, taskId: null, taskName: '' });
   const [onHoldDialog, setOnHoldDialog] = useState({ open: false, taskId: null, taskName: '', reason: '' });
   const [expandedTasks, setExpandedTasks] = useState(new Set());
+  const [bulkCreateDialog, setBulkCreateDialog] = useState({ open: false, mode: 'form' }); // 'form' or 'raw'
+  const [bulkTasks, setBulkTasks] = useState([]);
+  const [rawText, setRawText] = useState('');
+  const [bulkDefaults, setBulkDefaults] = useState({
+    timeEstimate: 30,
+    priority: 'Medium',
+    date: new Date().toISOString().slice(0, 10)
+  });
   const [formData, setFormData] = useState({
     name: '',
     timeEstimate: '',
@@ -315,6 +325,46 @@ const TaskManager = () => {
     }
   };
 
+  const handleBulkCreate = async () => {
+    try {
+      if (bulkCreateDialog.mode === 'raw') {
+        await tasksAPI.bulkCreate({
+          rawText,
+          defaultTimeEstimate: bulkDefaults.timeEstimate,
+          defaultPriority: bulkDefaults.priority,
+          defaultDate: bulkDefaults.date
+        });
+      } else {
+        await tasksAPI.bulkCreate({
+          tasks: bulkTasks,
+          defaultTimeEstimate: bulkDefaults.timeEstimate,
+          defaultPriority: bulkDefaults.priority,
+          defaultDate: bulkDefaults.date
+        });
+      }
+      setBulkCreateDialog({ open: false, mode: 'form' });
+      setBulkTasks([]);
+      setRawText('');
+      fetchTasks();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const addBulkTask = () => {
+    setBulkTasks([...bulkTasks, { name: '', timeEstimate: bulkDefaults.timeEstimate, priority: bulkDefaults.priority }]);
+  };
+
+  const removeBulkTask = (index) => {
+    setBulkTasks(bulkTasks.filter((_, i) => i !== index));
+  };
+
+  const updateBulkTask = (index, field, value) => {
+    const updatedTasks = [...bulkTasks];
+    updatedTasks[index] = { ...updatedTasks[index], [field]: value };
+    setBulkTasks(updatedTasks);
+  };
+
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
@@ -472,6 +522,28 @@ const TaskManager = () => {
     }
   };
 
+  const calculateTotalTime = () => {
+    return tasks.reduce((total, task) => total + (task.timeEstimate || 0), 0);
+  };
+
+  const calculatePendingTime = () => {
+    return tasks
+      .filter(task => task.status === 'Pending')
+      .reduce((total, task) => total + (task.timeEstimate || 0), 0);
+  };
+
+  const formatTimeInHours = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours === 0) {
+      return `${remainingMinutes} min`;
+    } else if (remainingMinutes === 0) {
+      return `${hours} hr${hours > 1 ? 's' : ''}`;
+    } else {
+      return `${hours} hr${hours > 1 ? 's' : ''} ${remainingMinutes} min`;
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -499,16 +571,55 @@ const TaskManager = () => {
             Manage and organize your tasks efficiently
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Plus size={16} />}
-          onClick={() => handleOpenDialog()}
-          size="small"
-          sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
-        >
-          Add Task
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<FileText size={16} />}
+            onClick={() => setBulkCreateDialog({ open: true, mode: 'form' })}
+            size="small"
+          >
+            Bulk Create
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Plus size={16} />}
+            onClick={() => handleOpenDialog()}
+            size="small"
+          >
+            Add Task
+          </Button>
+        </Box>
       </Box>
+
+      {/* Time Statistics */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-around', 
+            alignItems: 'center', 
+            gap: { xs: 2, sm: 0 }
+          }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6" color="primary.main" fontWeight="bold">
+                {formatTimeInHours(calculateTotalTime())}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total Time Estimate
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6" color="warning.main" fontWeight="bold">
+                {formatTimeInHours(calculatePendingTime())}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Pending Tasks Time
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
@@ -779,14 +890,6 @@ const TaskManager = () => {
                          Task Name
                        </TableCell>
                        <TableCell sx={{ 
-                         minWidth: { xs: 50, sm: 60, md: 80 }, 
-                         textAlign: 'center',
-                         display: { xs: 'none', sm: 'table-cell' },
-                         width: { sm: '12%', md: '10%' }
-                       }}>
-                         Priority
-                       </TableCell>
-                       <TableCell sx={{ 
                          minWidth: { xs: 60, sm: 80, md: 100 }, 
                          textAlign: 'center',
                          display: { xs: 'none', md: 'table-cell' },
@@ -805,28 +908,12 @@ const TaskManager = () => {
                          </TableCell>
                        )}
                        <TableCell sx={{ 
-                         minWidth: { xs: 60, sm: 70, md: 80 }, 
-                         textAlign: 'center',
-                         display: { xs: 'none', sm: 'table-cell' },
-                         width: { sm: '12%', md: '10%' }
-                       }}>
-                         Date
-                       </TableCell>
-                       <TableCell sx={{ 
                          minWidth: { xs: 60, sm: 80, md: 100 }, 
                          textAlign: 'center',
                          display: { xs: 'none', md: 'table-cell' },
                          width: { md: '10%', lg: '8%' }
                        }}>
-                         Time
-                       </TableCell>
-                       <TableCell sx={{ 
-                         minWidth: { xs: 50, sm: 60, md: 70 }, 
-                         textAlign: 'center',
-                         display: { xs: 'none', lg: 'table-cell' },
-                         width: { lg: '6%', xl: '5%' }
-                       }}>
-                         Steps
+                         Estimated Time
                        </TableCell>
                        <TableCell sx={{ 
                          minWidth: { xs: 60, sm: 70, md: 90 }, 
@@ -859,18 +946,38 @@ const TaskManager = () => {
                          <TableRow hover>
                                                     <TableCell>
                            <Box sx={{ minWidth: 0 }}>
-                             <Typography 
-                               variant="body1" 
-                               fontWeight="medium"
-                               sx={{
-                                 wordBreak: 'break-word',
-                                 lineHeight: 1.4,
-                                 mb: 0.5,
-                                 fontSize: { xs: '0.875rem', sm: '1rem' }
-                               }}
-                             >
-                               {task.name}
-                             </Typography>
+                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                               <Typography 
+                                 variant="body1" 
+                                 fontWeight="medium"
+                                 sx={{
+                                   wordBreak: 'break-word',
+                                   lineHeight: 1.4,
+                                   fontSize: { xs: '0.875rem', sm: '1rem' }
+                                 }}
+                               >
+                                 {task.name}
+                               </Typography>
+                               <Chip
+                                 label={task.priority}
+                                 color={getPriorityColor(task.priority)}
+                                 size="small"
+                                 sx={{ fontSize: '0.7rem', height: 20 }}
+                               />
+                               {task.steps && task.steps.length > 0 && (
+                                 <IconButton
+                                   size="small"
+                                   onClick={() => toggleTaskSteps(task._id)}
+                                   sx={{ p: 0.5 }}
+                                 >
+                                   {expandedTasks.has(task._id) ? (
+                                     <ChevronUp size={16} />
+                                   ) : (
+                                     <ChevronDown size={16} />
+                                   )}
+                                 </IconButton>
+                               )}
+                             </Box>
                              {task.dependency && (
                                <Typography 
                                  variant="body2" 
@@ -898,14 +1005,8 @@ const TaskManager = () => {
                                  On Hold: {task.onHoldReason}
                                </Typography>
                              )}
-                             {/* Show priority and status on mobile */}
+                             {/* Show status on mobile */}
                              <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                               <Chip
-                                 label={task.priority}
-                                 color={getPriorityColor(task.priority)}
-                                 size="small"
-                                 sx={{ fontSize: '0.7rem', height: 20 }}
-                               />
                                <Chip
                                  label={task.status}
                                  color={getStatusColor(task.status)}
@@ -932,16 +1033,7 @@ const TaskManager = () => {
                              )}
                            </Box>
                          </TableCell>
-                         <TableCell sx={{ 
-                           textAlign: 'center',
-                           display: { xs: 'none', sm: 'table-cell' }
-                         }}>
-                           <Chip
-                             label={task.priority}
-                             color={getPriorityColor(task.priority)}
-                             size="small"
-                           />
-                         </TableCell>
+
                          <TableCell sx={{ 
                            textAlign: 'center',
                            display: { xs: 'none', md: 'table-cell' }
@@ -983,18 +1075,7 @@ const TaskManager = () => {
                              )}
                            </TableCell>
                          )}
-                         <TableCell sx={{ 
-                           textAlign: 'center',
-                           display: { xs: 'none', sm: 'table-cell' }
-                         }}>
-                           <Chip
-                             icon={<Calendar size={16} />}
-                             label={formatDate(task.date)}
-                             color={getTaskDateColor(task.date)}
-                             size="small"
-                             variant="outlined"
-                           />
-                         </TableCell>
+
                          <TableCell sx={{ 
                            textAlign: 'center',
                            display: { xs: 'none', md: 'table-cell' }
@@ -1003,29 +1084,7 @@ const TaskManager = () => {
                              {task.timeEstimate} min
                            </Typography>
                          </TableCell>
-                         <TableCell sx={{ 
-                           textAlign: 'center',
-                           display: { xs: 'none', lg: 'table-cell' }
-                         }}>
-                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                             <Typography variant="body2">
-                               {task.steps?.length || 0} steps
-                             </Typography>
-                             {task.steps && task.steps.length > 0 && (
-                               <IconButton
-                                 size="small"
-                                 onClick={() => toggleTaskSteps(task._id)}
-                                 sx={{ p: 0.5 }}
-                               >
-                                 {expandedTasks.has(task._id) ? (
-                                   <ChevronUp size={16} />
-                                 ) : (
-                                   <ChevronDown size={16} />
-                                 )}
-                               </IconButton>
-                             )}
-                           </Box>
-                         </TableCell>
+
                          <TableCell sx={{ 
                            textAlign: 'center',
                            display: { xs: 'none', lg: 'table-cell' }
@@ -1154,7 +1213,7 @@ const TaskManager = () => {
                          {/* Expanded Steps Row */}
                          {expandedTasks.has(task._id) && task.steps && task.steps.length > 0 && (
                            <TableRow>
-                             <TableCell colSpan={activeTab === 4 ? 10 : 9} sx={{ p: 0, border: 0 }}>
+                             <TableCell colSpan={activeTab === 4 ? 7 : 6} sx={{ p: 0, border: 0 }}>
                                <Box sx={{ 
                                  bgcolor: 'grey.50', 
                                  p: { xs: 1.5, sm: 2 }, 
@@ -1509,6 +1568,159 @@ const TaskManager = () => {
              disabled={!onHoldDialog.reason.trim()}
            >
              Put On Hold
+           </Button>
+         </DialogActions>
+       </Dialog>
+
+       {/* Bulk Create Dialog */}
+       <Dialog open={bulkCreateDialog.open} onClose={() => setBulkCreateDialog({ open: false, mode: 'form' })} maxWidth="md" fullWidth>
+         <DialogTitle>
+           Bulk Create Tasks
+         </DialogTitle>
+         <DialogContent>
+           <Box sx={{ pt: 2 }}>
+             {/* Mode Tabs */}
+             <Tabs 
+               value={bulkCreateDialog.mode} 
+               onChange={(e, newValue) => setBulkCreateDialog({ ...bulkCreateDialog, mode: newValue })}
+               sx={{ mb: 3 }}
+             >
+               <Tab label="Form Mode" value="form" />
+               <Tab label="Raw Text Mode" value="raw" />
+             </Tabs>
+
+             {/* Default Settings */}
+             <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+               <TextField
+                 label="Default Time Estimate (minutes)"
+                 type="number"
+                 value={bulkDefaults.timeEstimate}
+                 onChange={(e) => setBulkDefaults({ ...bulkDefaults, timeEstimate: parseInt(e.target.value) || 30 })}
+                 sx={{ minWidth: 200 }}
+               />
+               <FormControl sx={{ minWidth: 200 }}>
+                 <InputLabel>Default Priority</InputLabel>
+                 <Select
+                   value={bulkDefaults.priority}
+                   onChange={(e) => setBulkDefaults({ ...bulkDefaults, priority: e.target.value })}
+                   label="Default Priority"
+                 >
+                   <MenuItem value="Low">Low</MenuItem>
+                   <MenuItem value="Medium">Medium</MenuItem>
+                   <MenuItem value="High">High</MenuItem>
+                 </Select>
+               </FormControl>
+               <TextField
+                 label="Default Date"
+                 type="date"
+                 value={bulkDefaults.date}
+                 onChange={(e) => setBulkDefaults({ ...bulkDefaults, date: e.target.value })}
+                 InputLabelProps={{ shrink: true }}
+                 sx={{ minWidth: 200 }}
+               />
+             </Box>
+
+             {bulkCreateDialog.mode === 'form' ? (
+               /* Form Mode */
+               <Box>
+                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                   <Typography variant="h6">Tasks</Typography>
+                   <Button
+                     variant="outlined"
+                     startIcon={<Plus size={16} />}
+                     onClick={addBulkTask}
+                     size="small"
+                   >
+                     Add Task
+                   </Button>
+                 </Box>
+                 
+                 {bulkTasks.map((task, index) => (
+                   <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                     <TextField
+                       label="Task Name"
+                       value={task.name}
+                       onChange={(e) => updateBulkTask(index, 'name', e.target.value)}
+                       sx={{ flex: 1, minWidth: 200 }}
+                       required
+                     />
+                     <TextField
+                       label="Time Estimate (minutes)"
+                       type="number"
+                       value={task.timeEstimate}
+                       onChange={(e) => updateBulkTask(index, 'timeEstimate', parseInt(e.target.value) || 0)}
+                       sx={{ minWidth: 120 }}
+                     />
+                     <FormControl sx={{ minWidth: 120 }}>
+                       <InputLabel>Priority</InputLabel>
+                       <Select
+                         value={task.priority}
+                         onChange={(e) => updateBulkTask(index, 'priority', e.target.value)}
+                         label="Priority"
+                       >
+                         <MenuItem value="Low">Low</MenuItem>
+                         <MenuItem value="Medium">Medium</MenuItem>
+                         <MenuItem value="High">High</MenuItem>
+                       </Select>
+                     </FormControl>
+                     <IconButton
+                       onClick={() => removeBulkTask(index)}
+                       color="error"
+                       size="small"
+                     >
+                       <Trash2 size={16} />
+                     </IconButton>
+                   </Box>
+                 ))}
+                 
+                 {bulkTasks.length === 0 && (
+                   <Box sx={{ textAlign: 'center', py: 4 }}>
+                     <Typography variant="body2" color="text.secondary">
+                       Click "Add Task" to start creating tasks
+                     </Typography>
+                   </Box>
+                 )}
+               </Box>
+             ) : (
+               /* Raw Text Mode */
+               <Box>
+                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                   Enter your tasks, one per line. You can include time estimates and priorities in the format:
+                   <br />
+                   • Task name (30min) [HIGH]
+                   <br />
+                   • Task name - 45 [MEDIUM]
+                   <br />
+                   • Simple task name (will use defaults)
+                 </Typography>
+                 <TextField
+                   fullWidth
+                   multiline
+                   rows={10}
+                   label="Raw Task List"
+                   value={rawText}
+                   onChange={(e) => setRawText(e.target.value)}
+                   placeholder="Enter your tasks here, one per line..."
+                   helperText={`${rawText.split('\n').filter(line => line.trim()).length} tasks detected`}
+                 />
+               </Box>
+             )}
+           </Box>
+         </DialogContent>
+         <DialogActions>
+           <Button onClick={() => setBulkCreateDialog({ open: false, mode: 'form' })}>
+             Cancel
+           </Button>
+           <Button
+             variant="contained"
+             onClick={handleBulkCreate}
+             disabled={
+               (bulkCreateDialog.mode === 'form' && bulkTasks.length === 0) ||
+               (bulkCreateDialog.mode === 'raw' && !rawText.trim()) ||
+               (bulkCreateDialog.mode === 'form' && bulkTasks.some(task => !task.name.trim()))
+             }
+           >
+             Create Tasks
            </Button>
          </DialogActions>
        </Dialog>

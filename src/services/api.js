@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://localhost:5000/api';
-const API_BASE_URL = 'https://be-productive-plus-linux-evaxd8fjbfekaghp.southeastasia-01.azurewebsites.net/api';
+const API_BASE_URL = 'http://localhost:5000/api';
+// const API_BASE_URL = 'https://be-productive-plus-linux-evaxd8fjbfekaghp.southeastasia-01.azurewebsites.net/api';
 
 // Create axios instance
 const api = axios.create({
@@ -65,6 +65,11 @@ export const tasksAPI = {
   
   create: async (taskData) => {
     const response = await api.post('/tasks', taskData);
+    return response.data;
+  },
+  
+  bulkCreate: async (bulkData) => {
+    const response = await api.post('/tasks/bulk', bulkData);
     return response.data;
   },
   
