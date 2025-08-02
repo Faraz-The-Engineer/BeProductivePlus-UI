@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import TaskManager from './pages/TaskManager';
+import AllTasks from './pages/AllTasks';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             >
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="tasks" element={<TaskManager />} />
+              <Route path="all-tasks" element={<AllTasks />} />
               <Route index element={<Navigate to="/dashboard" replace />} />
             </Route>
             

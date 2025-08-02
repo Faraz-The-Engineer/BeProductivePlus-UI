@@ -86,7 +86,7 @@ const TaskManager = () => {
   });
   const [stepDescription, setStepDescription] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
-  const [activeTab, setActiveTab] = useState(0); // 0: All, 1: Pending, 2: In Progress, 3: Completed, 4: On Hold
+  const [activeTab, setActiveTab] = useState(0); // 0: All, 1: Pending, 2: In Progress, 3: Completed, 4: On Hold, 5: Consolidated
 
   useEffect(() => {
     fetchTasks();
@@ -94,6 +94,13 @@ const TaskManager = () => {
 
   useEffect(() => {
     let filtered = tasks;
+    
+    // Special handling for Consolidated Tasks tab (tab 5)
+    if (activeTab === 5) {
+      // Show all tasks regardless of date or status filters
+      setFilteredTasks(tasks);
+      return;
+    }
     
     // First apply date filtering
     if (activeFilter) {
@@ -617,6 +624,16 @@ const TaskManager = () => {
                 Pending Tasks Time
               </Typography>
             </Box>
+            {activeTab === 5 && (
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="secondary.main" fontWeight="bold">
+                  Consolidated View
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  All Tasks Across All Dates
+                </Typography>
+              </Box>
+            )}
           </Box>
         </CardContent>
       </Card>
@@ -680,7 +697,7 @@ const TaskManager = () => {
             </IconButton>
           </Box>
           
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1 }}>
             <Button
               variant="outlined"
               size="small"
@@ -697,6 +714,24 @@ const TaskManager = () => {
             >
               Go to Today
             </Button>
+            {activeTab === 5 && (
+              <Button
+                variant="contained"
+                size="small"
+                disabled
+                sx={{
+                  backgroundColor: 'secondary.main',
+                  color: 'white',
+                  '&.Mui-disabled': {
+                    backgroundColor: 'secondary.main',
+                    color: 'white',
+                    opacity: 0.8
+                  }
+                }}
+              >
+                Consolidated View
+              </Button>
+            )}
           </Box>
         </CardContent>
       </Card>
@@ -837,6 +872,23 @@ const TaskManager = () => {
                  </Box>
                }
              />
+             <Tab 
+               label={
+                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                   <Typography variant="body2">Consolidated</Typography>
+                   <Chip 
+                     label={tasks.length} 
+                     size="small" 
+                     sx={{ 
+                       height: 20, 
+                       fontSize: '0.7rem',
+                       backgroundColor: 'secondary.main',
+                       color: 'white'
+                     }} 
+                   />
+                 </Box>
+               }
+             />
           </Tabs>
         </CardContent>
       </Card>
@@ -846,19 +898,21 @@ const TaskManager = () => {
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           {filteredTasks.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                                 {(() => {
-                   if (activeFilter) return 'No tasks found for the selected date range';
-                   const tabLabels = ['All', 'Pending', 'In Progress', 'Completed', 'On Hold'];
-                   return `No ${tabLabels[activeTab].toLowerCase()} tasks for ${getDateLabel(selectedDate)}`;
-                 })()}
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                {(() => {
+                  if (activeTab === 5) return 'No tasks found in your workspace';
+                  if (activeFilter) return 'No tasks found for the selected date range';
+                  const tabLabels = ['All', 'Pending', 'In Progress', 'Completed', 'On Hold', 'Consolidated'];
+                  return `No ${tabLabels[activeTab].toLowerCase()} tasks for ${getDateLabel(selectedDate)}`;
+                })()}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                 {(() => {
-                   if (activeFilter) return 'Try adjusting your filter or create a new task';
-                   const tabLabels = ['All', 'Pending', 'In Progress', 'Completed', 'On Hold'];
-                   return `No ${tabLabels[activeTab].toLowerCase()} tasks for ${getDateLabel(selectedDate).toLowerCase()}. Create a new task or navigate to a different date.`;
-                 })()}
+                {(() => {
+                  if (activeTab === 5) return 'You haven\'t created any tasks yet. Start by creating your first task!';
+                  if (activeFilter) return 'Try adjusting your filter or create a new task';
+                  const tabLabels = ['All', 'Pending', 'In Progress', 'Completed', 'On Hold', 'Consolidated'];
+                  return `No ${tabLabels[activeTab].toLowerCase()} tasks for ${getDateLabel(selectedDate).toLowerCase()}. Create a new task or navigate to a different date.`;
+                })()}
               </Typography>
               <Button
                 variant="contained"
@@ -885,10 +939,20 @@ const TaskManager = () => {
                        <TableCell sx={{ 
                          minWidth: { xs: 100, sm: 120, md: 150 },
                          maxWidth: { xs: 120, sm: 150, md: 'none' },
-                         width: { xs: '50%', sm: '40%', md: '35%' }
+                         width: { xs: activeTab === 5 ? '40%' : '50%', sm: activeTab === 5 ? '30%' : '40%', md: activeTab === 5 ? '25%' : '35%' }
                        }}>
                          Task Name
                        </TableCell>
+                       {activeTab === 5 && (
+                         <TableCell sx={{ 
+                           minWidth: { xs: 80, sm: 100, md: 120 }, 
+                           textAlign: 'center',
+                           display: { xs: 'none', sm: 'table-cell' },
+                           width: { xs: '20%', sm: '15%', md: '12%' }
+                         }}>
+                           Date
+                         </TableCell>
+                       )}
                        <TableCell sx={{ 
                          minWidth: { xs: 60, sm: 80, md: 100 }, 
                          textAlign: 'center',
@@ -1033,6 +1097,24 @@ const TaskManager = () => {
                              )}
                            </Box>
                          </TableCell>
+
+                         {activeTab === 5 && (
+                           <TableCell sx={{ 
+                             textAlign: 'center',
+                             display: { xs: 'none', sm: 'table-cell' }
+                           }}>
+                             <Typography 
+                               variant="body2" 
+                               color={getTaskDateColor(task.date)}
+                               sx={{ 
+                                 fontWeight: 500,
+                                 fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                               }}
+                             >
+                               {formatDate(task.date)}
+                             </Typography>
+                           </TableCell>
+                         )}
 
                          <TableCell sx={{ 
                            textAlign: 'center',

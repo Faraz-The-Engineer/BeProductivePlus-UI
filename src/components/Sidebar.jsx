@@ -16,6 +16,7 @@ import {
 import {
   BarChart3,
   CheckSquare,
+  List as ListIcon,
   LogOut,
   User,
   Menu,
@@ -34,6 +35,11 @@ const menuItems = [
     text: 'Task Manager',
     icon: <CheckSquare size={18} />,
     path: '/tasks',
+  },
+  {
+    text: 'All Tasks',
+    icon: <ListIcon size={18} />,
+    path: '/all-tasks',
   },
 ];
 
