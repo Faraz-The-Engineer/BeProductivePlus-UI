@@ -13,6 +13,11 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import TaskManager from './pages/TaskManager';
 import AllTasks from './pages/AllTasks';
+import Analytics from './pages/Analytics';
+import Templates from './pages/Templates';
+import Calendar from './pages/Calendar';
+import Kanban from './pages/Kanban';
+import TimeTracking from './pages/TimeTracking';
 
 function App() {
   return (
@@ -36,6 +41,11 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="tasks" element={<TaskManager />} />
               <Route path="all-tasks" element={<AllTasks />} />
+              <Route path="kanban" element={<Kanban />} />
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="time-tracking" element={<TimeTracking />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="templates" element={<Templates />} />
               <Route index element={<Navigate to="/dashboard" replace />} />
             </Route>
             

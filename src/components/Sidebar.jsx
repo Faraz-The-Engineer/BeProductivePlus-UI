@@ -20,6 +20,11 @@ import {
   LogOut,
   User,
   Menu,
+  TrendingUp,
+  FileText,
+  Calendar,
+  Columns,
+  Timer,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -40,6 +45,31 @@ const menuItems = [
     text: 'All Tasks',
     icon: <ListIcon size={18} />,
     path: '/all-tasks',
+  },
+  {
+    text: 'Kanban Board',
+    icon: <Columns size={18} />,
+    path: '/kanban',
+  },
+  {
+    text: 'Calendar',
+    icon: <Calendar size={18} />,
+    path: '/calendar',
+  },
+  {
+    text: 'Time Tracking',
+    icon: <Timer size={18} />,
+    path: '/time-tracking',
+  },
+  {
+    text: 'Templates',
+    icon: <FileText size={18} />,
+    path: '/templates',
+  },
+  {
+    text: 'Analytics',
+    icon: <TrendingUp size={18} />,
+    path: '/analytics',
   },
 ];
 

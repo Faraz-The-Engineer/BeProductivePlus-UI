@@ -97,6 +97,84 @@ export const tasksAPI = {
     const response = await api.delete(`/tasks/${taskId}/steps/${stepIndex}`);
     return response.data;
   },
+
+  // Time tracking endpoints
+  startTimer: async (taskId) => {
+    const response = await api.post(`/tasks/${taskId}/timer/start`);
+    return response.data;
+  },
+
+  stopTimer: async (taskId, description = '') => {
+    const response = await api.post(`/tasks/${taskId}/timer/stop`, { description });
+    return response.data;
+  },
+
+  getTimeReport: async (taskId) => {
+    const response = await api.get(`/tasks/${taskId}/time-report`);
+    return response.data;
+  },
+
+  addTimeLog: async (taskId, timeLogData) => {
+    const response = await api.post(`/tasks/${taskId}/time-log`, timeLogData);
+    return response.data;
+  },
+
+  getTimeTrackingSummary: async (startDate = '', endDate = '') => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    
+    const response = await api.get(`/tasks/time-tracking/summary?${params.toString()}`);
+    return response.data;
+  },
+};
+
+// Templates API
+export const templatesAPI = {
+  getAll: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.category) params.append('category', filters.category);
+    if (filters.tags) params.append('tags', filters.tags);
+    if (filters.search) params.append('search', filters.search);
+    
+    const response = await api.get(`/templates?${params.toString()}`);
+    return response.data;
+  },
+  
+  getById: async (id) => {
+    const response = await api.get(`/templates/${id}`);
+    return response.data;
+  },
+  
+  create: async (templateData) => {
+    const response = await api.post('/templates', templateData);
+    return response.data;
+  },
+  
+  update: async (id, templateData) => {
+    const response = await api.put(`/templates/${id}`, templateData);
+    return response.data;
+  },
+  
+  delete: async (id) => {
+    const response = await api.delete(`/templates/${id}`);
+    return response.data;
+  },
+  
+  use: async (id) => {
+    const response = await api.post(`/templates/${id}/use`);
+    return response.data;
+  },
+  
+  getCategories: async () => {
+    const response = await api.get('/templates/categories/list');
+    return response.data;
+  },
+  
+  getPopular: async () => {
+    const response = await api.get('/templates/popular/list');
+    return response.data;
+  },
 };
 
 export default api; 
