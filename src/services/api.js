@@ -45,8 +45,15 @@ export const authAPI = {
     return response.data;
   },
   
-  signup: async (name, email, password) => {
-    const response = await api.post('/auth/signup', { name, email, password });
+  signup: async (name, email, password, apiKey) => {
+    const response = await api.post('/auth/signup', 
+      { name, email, password },
+      { 
+        headers: {
+          'x-api-key': apiKey
+        }
+      }
+    );
     return response.data;
   },
 };
@@ -175,6 +182,172 @@ export const templatesAPI = {
     const response = await api.get('/templates/popular/list');
     return response.data;
   },
+};
+
+// Premium API
+export const premiumAPI = {
+  // Subscription management
+  getFeatures: async () => {
+    const response = await api.get('/premium/features');
+    return response.data;
+  },
+
+  updateSubscription: async (tier) => {
+    const response = await api.put('/premium/subscription', { tier });
+    return response.data;
+  },
+
+  // Advanced Analytics
+  getAdvancedAnalytics: async (days = 30) => {
+    const response = await api.get(`/premium/analytics/advanced?days=${days}`);
+    return response.data;
+  },
+
+  // Focus Sessions
+  startFocusSession: async (sessionData) => {
+    const response = await api.post('/premium/focus-session/start', sessionData);
+    return response.data;
+  },
+
+  completeFocusSession: async (sessionId, completionData) => {
+    const response = await api.put(`/premium/focus-session/${sessionId}/end`, completionData);
+    return response.data;
+  },
+
+  getFocusSessions: async (days = 7) => {
+    const response = await api.get(`/premium/focus-sessions?days=${days}`);
+    return response.data;
+  },
+
+  // Goals Management
+  getGoals: async () => {
+    const response = await api.get('/premium/goals');
+    return response.data;
+  },
+
+  createGoal: async (goalData) => {
+    const response = await api.post('/premium/goals', goalData);
+    return response.data;
+  },
+
+  updateGoal: async (goalId, goalData) => {
+    const response = await api.put(`/premium/goals/${goalId}`, goalData);
+    return response.data;
+  },
+
+  deleteGoal: async (goalId) => {
+    const response = await api.delete(`/premium/goals/${goalId}`);
+    return response.data;
+  },
+
+  // AI Features
+  getAISchedule: async () => {
+    const response = await api.post('/premium/ai-schedule');
+    return response.data;
+  },
+
+  getAIRecommendations: async () => {
+    const response = await api.get('/premium/ai-coach');
+    return response.data;
+  },
+
+  // Productivity Insights
+  getProductivityInsights: async () => {
+    const response = await api.get('/premium/insights');
+    return response.data;
+  },
+
+  // Stats and analytics (mock functions for now)
+  getTodayStats: async () => {
+    // Mock data - in real app this would come from backend
+    return {
+      focusTime: 120, // minutes
+      sessionsCompleted: 4,
+      distractionsBlocked: 8,
+      productivity: 4.2,
+      currentStreak: 5
+    };
+  },
+
+  getWeeklyStats: async () => {
+    // Mock data - generate week stats
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map(day => ({
+      day,
+      focusTime: Math.floor(Math.random() * 180) + 60, // 60-240 minutes
+      sessions: Math.floor(Math.random() * 8) + 2, // 2-10 sessions
+      productivity: Math.random() * 3 + 2 // 2-5 rating
+    }));
+  },
+
+  getAchievements: async () => {
+    // Mock achievements
+    return [
+      { title: 'First Focus', description: 'Completed first session', icon: '🎯' },
+      { title: 'Week Warrior', description: '7-day streak', icon: '🔥' },
+      { title: 'Focus Master', description: '100 sessions completed', icon: '🏆' }
+    ];
+  },
+
+  // Workspace/Team features
+  getWorkspaces: async () => {
+    const response = await api.get('/premium/workspaces');
+    return response.data;
+  },
+
+  createWorkspace: async (workspaceData) => {
+    const response = await api.post('/premium/workspaces', workspaceData);
+    return response.data;
+  },
+
+  joinWorkspace: async (workspaceId, joinData) => {
+    const response = await api.post(`/premium/workspaces/${workspaceId}/join`, joinData);
+    return response.data;
+  },
+
+  // Automation
+  createAutomation: async (automationData) => {
+    const response = await api.post('/premium/automations', automationData);
+    return response.data;
+  },
+
+  getAutomations: async () => {
+    const response = await api.get('/premium/automations');
+    return response.data;
+  },
+
+  // Custom Reports
+  generateReport: async (reportConfig) => {
+    const response = await api.post('/premium/reports/generate', reportConfig);
+    return response.data;
+  },
+
+  getReports: async () => {
+    const response = await api.get('/premium/reports');
+    return response.data;
+  },
+
+  // Integrations
+  getIntegrations: async () => {
+    const response = await api.get('/premium/integrations');
+    return response.data;
+  },
+
+  connectIntegration: async (integrationData) => {
+    const response = await api.post('/premium/integrations/connect', integrationData);
+    return response.data;
+  },
+
+  // AI Smart Suggestions
+  getSmartSuggestions: async () => {
+    const response = await api.get('/premium/suggestions');
+    return response.data;
+  },
+
+  applySmartSuggestion: async (suggestionId) => {
+    const response = await api.post(`/premium/suggestions/${suggestionId}/apply`);
+    return response.data;
+  }
 };
 
 export default api; 

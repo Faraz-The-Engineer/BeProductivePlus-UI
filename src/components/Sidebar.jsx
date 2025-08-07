@@ -25,6 +25,12 @@ import {
   Calendar,
   Columns,
   Timer,
+  Brain,
+  Target,
+  Zap,
+  BarChart,
+  Crown,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -70,6 +76,39 @@ const menuItems = [
     text: 'Analytics',
     icon: <TrendingUp size={18} />,
     path: '/analytics',
+  },
+];
+
+const premiumMenuItems = [
+  {
+    text: 'Focus Mode',
+    icon: <Brain size={18} />,
+    path: '/focus-mode',
+    premium: true,
+  },
+  {
+    text: 'Goals & Achievements',
+    icon: <Target size={18} />,
+    path: '/goals',
+    premium: true,
+  },
+  {
+    text: 'AI Smart Scheduler',
+    icon: <Zap size={18} />,
+    path: '/ai-scheduler',
+    premium: true,
+  },
+  {
+    text: 'Advanced Analytics',
+    icon: <BarChart size={18} />,
+    path: '/advanced-analytics',
+    premium: true,
+  },
+  {
+    text: 'Premium Subscription',
+    icon: <Crown size={18} />,
+    path: '/premium',
+    premium: true,
   },
 ];
 
@@ -164,6 +203,79 @@ const Sidebar = () => {
                 {item.icon}
               </ListItemIcon>
               <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+        
+        {/* Premium Features Section */}
+        <Divider sx={{ my: 1, mx: 2 }} />
+        <ListItem sx={{ py: 0, px: 2 }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              fontWeight: 'bold', 
+              color: 'text.secondary',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5
+            }}
+          >
+            <Crown size={14} />
+            PREMIUM FEATURES
+          </Typography>
+        </ListItem>
+        
+        {premiumMenuItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              onClick={() => handleNavigation(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                mx: 1,
+                borderRadius: 2,
+                '&.Mui-selected': {
+                  background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
+                  color: 'white',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FF5252 0%, #FF7B7B 100%)',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                },
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  color: location.pathname === item.path ? 'white' : 'orange',
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.text}
+                sx={{
+                  '& .MuiListItemText-primary': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    fontWeight: location.pathname === item.path ? 'bold' : 'medium'
+                  }
+                }}
+                secondary={
+                  location.pathname !== item.path && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                      <Sparkles size={12} color="orange" />
+                      <Typography variant="caption" sx={{ color: 'orange', fontWeight: 'bold' }}>
+                        PREMIUM
+                      </Typography>
+                    </Box>
+                  )
+                }
+              />
             </ListItemButton>
           </ListItem>
         ))}

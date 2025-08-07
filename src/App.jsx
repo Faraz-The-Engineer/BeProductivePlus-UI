@@ -19,6 +19,13 @@ import Calendar from './pages/Calendar';
 import Kanban from './pages/Kanban';
 import TimeTracking from './pages/TimeTracking';
 
+// Premium Pages
+import FocusMode from './pages/FocusMode';
+import Goals from './pages/Goals';
+import AIScheduler from './pages/AIScheduler';
+import AdvancedAnalytics from './pages/AdvancedAnalytics';
+import PremiumSubscription from './pages/PremiumSubscription';
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -46,6 +53,14 @@ function App() {
               <Route path="time-tracking" element={<TimeTracking />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="templates" element={<Templates />} />
+              
+              {/* Premium Routes */}
+              <Route path="focus-mode" element={<FocusMode />} />
+              <Route path="goals" element={<Goals />} />
+              <Route path="ai-scheduler" element={<AIScheduler />} />
+              <Route path="advanced-analytics" element={<AdvancedAnalytics />} />
+              <Route path="premium" element={<PremiumSubscription />} />
+              
               <Route index element={<Navigate to="/dashboard" replace />} />
             </Route>
             

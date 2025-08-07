@@ -29,7 +29,9 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signup(formData.name, formData.email, formData.password);
+      // Use a default API key or get it from environment/config
+      const apiKey = 'be-productive-2024-api-key'; // This should be configured
+      await signup(formData.name, formData.email, formData.password, apiKey);
       navigate('/dashboard');
     } catch (err) {
       // Error is handled by AuthContext
